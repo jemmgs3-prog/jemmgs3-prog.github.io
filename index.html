@@ -253,7 +253,7 @@
 </div>
 
 <script>
-// ─── PUZZLE DATA ─────────────────────────────────────────────────────────────
+// ─── PUZZLE DATA ────────────────────────────────────────────────────────
 // Each word: { id, word, row, col, dir, clue }
 // Grid size: 13 rows x 13 cols
 const WORDS = [
@@ -288,11 +288,11 @@ WORDS.forEach(w => {
   if (!cellNums[startKey]) cellNums[startKey] = w.id;
 });
 
-// ─── STATE ──────────────────────────────��─────────────────────────────────────
+// ─── STATE ──────────────────────────────────────────────────────────────
 let selR = -1, selC = -1, selDir = "across";
 let timerSec = 0, timerStarted = false, timerInt = null;
 
-// ─── TIMER ────────────────────────────────────────────────────────────────────
+// ─── TIMER ──────────────────────────────────────────────────────────────
 function startTimer() {
   if (timerStarted) return;
   timerStarted = true;
@@ -303,7 +303,7 @@ function startTimer() {
   }, 1000);
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
+// ─── RENDER ─────────────────────────────────────────────────────────────
 function renderGrid() {
   const table = document.getElementById('grid');
   table.innerHTML = '';
@@ -360,7 +360,7 @@ function updateDisplay() {
   highlightCells();
 }
 
-// ─── HIGHLIGHT ────────────────────────────────────────────────────────────────
+// ─── HIGHLIGHT ─────────────────────────────────────────────────────────
 function highlightCells() {
   // Clear all
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
@@ -399,7 +399,7 @@ function getWordAt(r, c, dir) {
   });
 }
 
-// ─── INTERACTION ──────────────────────────────────────────────────────────────
+// ─── INTERACTION ────────────────────────────────────────────────────────
 function clickCell(r, c) {
   startTimer();
   // Toggle direction if same cell
@@ -495,7 +495,7 @@ function nextWord(dir) {
   jumpToWord(next);
 }
 
-// ─── CHECK / HINT / RESET ────────────────────────────────────────────────────
+// ─── CHECK / HINT / RESET ───────────────────────────────────────────────
 function checkAll() {
   // Clear old states first
   for (const key in cells) {
@@ -583,7 +583,7 @@ function updateSolvedCount() {
   document.getElementById('sc').textContent=solved;
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// ─── INIT ───────────────────────────────────────────────────────────
 renderGrid();
 </script>
 </body>
