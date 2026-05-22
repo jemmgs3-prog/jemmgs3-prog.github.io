@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crucigrama — Redes de Computadoras</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --card: #1a2236;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --correct: #00ff9d;
+    --wrong: #ff4757;
+    --text: #e8eaf0;
+    --muted: #6b7a99;
+    --border: #2a3a55;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .container { max-width: 1000px; margin: 0 auto; position: relative; }
+
+  header { text-align: center; margin-bottom: 32px; }
+  .tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 5px 14px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: clamp(24px, 4vw, 44px);
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; font-family: 'Space Mono', monospace; }
+
+  .stats {
+    display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 10px 20px; border-radius: 4px; text-align: center;
+  }
+  .stat-val { font-size: 24px; font-weight: 800; color: var(--accent); font-family: 'Space Mono', monospace; display: block; }
+  .stat-lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 680px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  /* GRID */
+  .grid-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  table { border-collapse: collapse; }
+
+  td {
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    background: #050810;
+    position: relative;
+    user-select: none;
+  }
+  td.white { background: #0f1825; cursor: pointer; }
+  td.white:hover { background: rgba(0,212,255,0.08); }
+  td.highlight { background: rgba(0,212,255,0.12) !important; }
+  td.selected { background: rgba(0,212,255,0.28) !important; }
+  td.correct { background: rgba(0,255,157,0.15) !important; }
+  td.wrong { background: rgba(255,71,87,0.15) !important; }
+
+  .cell-letter {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  td.correct .cell-letter { color: var(--correct); }
+  td.wrong .cell-letter { color: var(--wrong); }
+
+  .cell-num {
+    position: absolute;
+    top: 2px; left: 3px;
+    font-size: 8px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    line-height: 1;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Hidden real input for keyboard on mobile */
+  #ghost-input {
+    position: fixed;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px; height: 1px;
+    top: 0; left: 0;
+  }
+
+  /* CLUES */
+  .clues-col { min-width: 0; }
+
+  .clue-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .clue-section h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .clue {
+    display: flex; gap: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    padding: 7px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background 0.15s;
+  }
+  .clue:hover, .clue.hl { background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.2); }
+  .clue.done { opacity: 0.45; }
+  .clue-num { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent2); font-weight: 700; min-width: 18px; padding-top: 1px; }
+  .clue-text { font-size: 12px; color: var(--text); line-height: 1.4; }
+
+  /* ACTIONS */
+  .actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+    letter-spacing: 1px; padding: 11px 22px; border-radius: 4px;
+    border: 1px solid; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-p { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn-p:hover { background: #33ddff; }
+  .btn-s { background: transparent; color: var(--accent2); border-color: var(--accent2); }
+  .btn-s:hover { background: rgba(255,107,53,0.1); }
+  .btn-g { background: transparent; color: var(--muted); border-color: var(--border); }
+  .btn-g:hover { color: var(--text); border-color: var(--muted); }
+
+  /* WIN */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; align-items:center; justify-content:center; }
+  .overlay.show { display:flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--accent); border-radius: 12px;
+    padding: 40px 32px; text-align: center; max-width: 360px; width: 90%;
+    box-shadow: 0 0 60px rgba(0,212,255,0.2);
+    animation: pop .4s cubic-bezier(.175,.885,.32,1.275);
+  }
+  @keyframes pop { from { transform:scale(.6); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .modal-icon { font-size: 56px; margin-bottom: 12px; }
+  .modal h2 { font-size: 28px; font-weight: 800; color: var(--correct); margin-bottom: 6px; }
+  .modal p { color: var(--muted); margin-bottom: 20px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="tag">TALLER DE CULTURA DIGITAL</div>
+    <h1>Redes de Computadoras</h1>
+    <div class="subtitle">Crucigrama interactivo — 10 conceptos clave</div>
+    <div class="stats">
+      <div class="stat"><span class="stat-val" id="sc">0</span><span class="stat-lbl">Resueltas</span></div>
+      <div class="stat"><span class="stat-val">10</span><span class="stat-lbl">Total</span></div>
+      <div class="stat"><span class="stat-val" id="td">0:00</span><span class="stat-lbl">Tiempo</span></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div>
+      <div class="grid-wrap">
+        <table id="grid"></table>
+      </div>
+      <div class="actions">
+        <button class="btn-p" onclick="checkAll()">✓ Verificar</button>
+        <button class="btn-s" onclick="giveHint()">💡 Pista</button>
+        <button class="btn-g" onclick="resetAll()">↺ Reiniciar</button>
+      </div>
+    </div>
+    <div class="clues-col">
+      <div class="clue-section"><h3>→ Horizontal</h3><div id="across-list"></div></div>
+      <div class="clue-section"><h3>↓ Vertical</h3><div id="down-list"></div></div>
+    </div>
+  </div>
+</div>
+
+<input id="ghost-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+
+<div class="overlay" id="win-modal">
+  <div class="modal">
+    <div class="modal-icon">🏆</div>
+    <h2>¡Excelente!</h2>
+    <p id="win-msg">Completaste el crucigrama.</p>
+    <button class="btn-p" onclick="document.getElementById('win-modal').classList.remove('show')">Cerrar</button>
+  </div>
+</div>
+
+<script>
+// ─── PUZZLE DATA ─────────────────────────────────────────────────────────────
+// Each word: { id, word, row, col, dir, clue }
+// Grid size: 13 rows x 13 cols
+const WORDS = [
+  { id:1,  word:"LAN",       row:0,  col:0,  dir:"across", clue:"Red de área local, usada en casas y escuelas" },
+  { id:2,  word:"TOPOLOGIA", row:2,  col:0,  dir:"across", clue:"Forma en que se organizan los dispositivos en una red" },
+  { id:3,  word:"BUS",       row:4,  col:0,  dir:"across", clue:"Topología donde todos los nodos comparten un cable central" },
+  { id:4,  word:"UTP",       row:6,  col:0,  dir:"across", clue:"Cable de par trenzado muy común en redes LAN" },
+  { id:5,  word:"WIFI",      row:8,  col:0,  dir:"across", clue:"Tecnología inalámbrica que usa ondas de radio" },
+  { id:6,  word:"ANILLO",    row:10, col:0,  dir:"across", clue:"Topología donde los nodos se conectan en círculo" },
+  { id:7,  word:"WAN",       row:0,  col:2,  dir:"down",   clue:"Red de área amplia; Internet es su mayor ejemplo" },
+  { id:8,  word:"ESTRELLA",  row:0,  col:4,  dir:"down",   clue:"Topología con un nodo central tipo switch o hub" },
+  { id:9,  word:"BLUETOOTH", row:1,  col:8,  dir:"down",   clue:"Tecnología inalámbrica de corto alcance (PAN)" },
+  { id:10, word:"COAXIAL",   row:3,  col:6,  dir:"down",   clue:"Cable con conductor central rodeado de malla metálica" },
+];
+
+const ROWS = 12, COLS = 13;
+
+// ─── BUILD DATA STRUCTURES ───────────────────────────────────────────────────
+// cells[r][c] = { answer, value, wordIds[] }
+const cells = {};
+const cellNums = {};
+
+WORDS.forEach(w => {
+  for (let i = 0; i < w.word.length; i++) {
+    const r = w.dir==="across" ? w.row     : w.row+i;
+    const c = w.dir==="across" ? w.col+i   : w.col;
+    const key = `${r},${c}`;
+    if (!cells[key]) cells[key] = { answer: w.word[i], value: "", wordIds: [] };
+    cells[key].wordIds.push(w.id);
+  }
+  const startKey = `${w.row},${w.col}`;
+  if (!cellNums[startKey]) cellNums[startKey] = w.id;
+});
+
+// ─── STATE ──────────────────────────────��─────────────────────────────────────
+let selR = -1, selC = -1, selDir = "across";
+let timerSec = 0, timerStarted = false, timerInt = null;
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+function startTimer() {
+  if (timerStarted) return;
+  timerStarted = true;
+  timerInt = setInterval(() => {
+    timerSec++;
+    const m = Math.floor(timerSec/60), s = timerSec%60;
+    document.getElementById('td').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  }, 1000);
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderGrid() {
+  const table = document.getElementById('grid');
+  table.innerHTML = '';
+  for (let r = 0; r < ROWS; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < COLS; c++) {
+      const td = document.createElement('td');
+      const key = `${r},${c}`;
+      if (cells[key]) {
+        td.classList.add('white');
+        td.id = `td-${r}-${c}`;
+        if (cellNums[key]) {
+          const num = document.createElement('span');
+          num.className = 'cell-num';
+          num.textContent = cellNums[key];
+          td.appendChild(num);
+        }
+        const letter = document.createElement('span');
+        letter.className = 'cell-letter';
+        letter.id = `lt-${r}-${c}`;
+        letter.textContent = cells[key].value;
+        td.appendChild(letter);
+        td.addEventListener('click', () => clickCell(r, c));
+      }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+  renderClues();
+}
+
+function renderClues() {
+  ['across','down'].forEach(dir => {
+    const el = document.getElementById(dir==='across'?'across-list':'down-list');
+    el.innerHTML = '';
+    WORDS.filter(w=>w.dir===dir).forEach(w => {
+      const div = document.createElement('div');
+      div.className = 'clue';
+      div.id = `clue-${w.id}`;
+      div.innerHTML = `<span class="clue-num">${w.id}</span><span class="clue-text">${w.clue}</span>`;
+      div.addEventListener('click', () => jumpToWord(w));
+      el.appendChild(div);
+    });
+  });
+}
+
+function updateDisplay() {
+  // Update all cell letters
+  for (const key in cells) {
+    const [r,c] = key.split(',').map(Number);
+    const lt = document.getElementById(`lt-${r}-${c}`);
+    if (lt) lt.textContent = cells[key].value;
+  }
+  highlightCells();
+}
+
+// ─── HIGHLIGHT ────────────────────────────────────────────────────────────────
+function highlightCells() {
+  // Clear all
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    const td = document.getElementById(`td-${r}-${c}`);
+    if (td) td.classList.remove('highlight','selected');
+  }
+  document.querySelectorAll('.clue').forEach(el=>el.classList.remove('hl'));
+
+  if (selR<0) return;
+
+  const word = getCurrentWord();
+  if (word) {
+    for (let i=0;i<word.word.length;i++) {
+      const r = word.dir==="across"?word.row:word.row+i;
+      const c = word.dir==="across"?word.col+i:word.col;
+      const td = document.getElementById(`td-${r}-${c}`);
+      if (td) td.classList.add('highlight');
+    }
+    const clueEl = document.getElementById(`clue-${word.id}`);
+    if (clueEl) { clueEl.classList.add('hl'); clueEl.scrollIntoView({block:'nearest'}); }
+  }
+
+  const selTd = document.getElementById(`td-${selR}-${selC}`);
+  if (selTd) { selTd.classList.remove('highlight'); selTd.classList.add('selected'); }
+}
+
+function getCurrentWord() {
+  return getWordAt(selR, selC, selDir);
+}
+
+function getWordAt(r, c, dir) {
+  return WORDS.find(w => {
+    if (w.dir!==dir) return false;
+    if (dir==="across") return w.row===r && c>=w.col && c<w.col+w.word.length;
+    return w.col===c && r>=w.row && r<w.row+w.word.length;
+  });
+}
+
+// ─── INTERACTION ──────────────────────────────────────────────────────────────
+function clickCell(r, c) {
+  startTimer();
+  // Toggle direction if same cell
+  if (selR===r && selC===c) {
+    // Try to switch direction if valid
+    const otherDir = selDir==="across"?"down":"across";
+    if (getWordAt(r,c,otherDir)) selDir = otherDir;
+  } else {
+    selR=r; selC=c;
+    // Auto-pick direction: prefer current, else switch
+    if (!getWordAt(r,c,selDir)) {
+      const otherDir = selDir==="across"?"down":"across";
+      if (getWordAt(r,c,otherDir)) selDir = otherDir;
+    }
+  }
+  selR=r; selC=c;
+  highlightCells();
+  focusGhost();
+}
+
+function jumpToWord(w) {
+  selR=w.row; selC=w.col; selDir=w.dir;
+  highlightCells();
+  focusGhost();
+}
+
+function focusGhost() {
+  const ghost = document.getElementById('ghost-input');
+  ghost.value = '';
+  ghost.focus();
+}
+
+// Ghost input handler
+document.getElementById('ghost-input').addEventListener('keydown', function(e) {
+  if (selR < 0) return;
+  const key = e.key;
+
+  if (key === 'Backspace') {
+    e.preventDefault();
+    const k = `${selR},${selC}`;
+    if (cells[k] && cells[k].value) {
+      cells[k].value = '';
+      updateDisplay();
+      updateSolvedCount();
+    } else {
+      moveCursor(-1);
+    }
+    return;
+  }
+
+  if (key === 'ArrowRight') { e.preventDefault(); selDir='across'; moveCursor(1); return; }
+  if (key === 'ArrowLeft')  { e.preventDefault(); selDir='across'; moveCursor(-1); return; }
+  if (key === 'ArrowDown')  { e.preventDefault(); selDir='down';   moveCursor(1); return; }
+  if (key === 'ArrowUp')    { e.preventDefault(); selDir='down';   moveCursor(-1); return; }
+  if (key === 'Tab') {
+    e.preventDefault();
+    nextWord(e.shiftKey ? -1 : 1);
+    return;
+  }
+});
+
+document.getElementById('ghost-input').addEventListener('input', function(e) {
+  if (selR < 0) return;
+  const raw = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase();
+  this.value = '';
+  if (!raw) return;
+  const letter = raw[raw.length-1];
+  const k = `${selR},${selC}`;
+  if (!cells[k]) return;
+  cells[k].value = letter;
+  updateDisplay();
+  updateSolvedCount();
+  moveCursor(1);
+});
+
+function moveCursor(dir) {
+  const dr = selDir==="down" ? dir : 0;
+  const dc = selDir==="across" ? dir : 0;
+  const nr = selR+dr, nc = selC+dc;
+  const nk = `${nr},${nc}`;
+  if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&cells[nk]) {
+    selR=nr; selC=nc;
+    highlightCells();
+  }
+  focusGhost();
+}
+
+function nextWord(dir) {
+  const idx = WORDS.findIndex(w=>w.dir===selDir&&w.row===selR&&w.col===selC) ;
+  let allIdx = WORDS.indexOf(getCurrentWord());
+  if (allIdx<0) allIdx=0;
+  const next = WORDS[(allIdx+dir+WORDS.length)%WORDS.length];
+  jumpToWord(next);
+}
+
+// ─── CHECK / HINT / RESET ────────────────────────────────────────────────────
+function checkAll() {
+  // Clear old states first
+  for (const key in cells) {
+    const [r,c] = key.split(',').map(Number);
+    const td = document.getElementById(`td-${r}-${c}`);
+    if (td) { td.classList.remove('correct','wrong'); }
+  }
+
+  let allOk = true;
+  WORDS.forEach(w => {
+    let wordOk = true;
+    for (let i=0;i<w.word.length;i++) {
+      const r=w.dir==="across"?w.row:w.row+i;
+      const c=w.dir==="across"?w.col+i:w.col;
+      const k=`${r},${c}`;
+      const val = (cells[k]?.value||'').toUpperCase();
+      const expected = w.word[i];
+      const td = document.getElementById(`td-${r}-${c}`);
+      if (!td) continue;
+      if (val===expected) {
+        td.classList.add('correct');
+      } else {
+        td.classList.add('wrong');
+        wordOk=false; allOk=false;
+      }
+    }
+    if (wordOk) document.getElementById(`clue-${w.id}`)?.classList.add('done');
+  });
+
+  if (allOk) {
+    clearInterval(timerInt);
+    const m=Math.floor(timerSec/60), s=timerSec%60;
+    document.getElementById('win-msg').textContent=`¡Perfecto! Tiempo: ${m}:${s.toString().padStart(2,'0')}`;
+    document.getElementById('win-modal').classList.add('show');
+  }
+  updateSolvedCount();
+}
+
+function giveHint() {
+  if (selR<0) return;
+  const word = getCurrentWord();
+  if (!word) return;
+  // Find first empty or wrong cell in word
+  for (let i=0;i<word.word.length;i++) {
+    const r=word.dir==="across"?word.row:word.row+i;
+    const c=word.dir==="across"?word.col+i:word.col;
+    const k=`${r},${c}`;
+    if (cells[k] && cells[k].value !== word.word[i]) {
+      cells[k].value = word.word[i];
+      const td = document.getElementById(`td-${r}-${c}`);
+      if (td) { td.classList.remove('wrong'); td.classList.add('correct'); }
+      updateDisplay();
+      updateSolvedCount();
+      return;
+    }
+  }
+}
+
+function resetAll() {
+  clearInterval(timerInt);
+  timerSec=0; timerStarted=false;
+  document.getElementById('td').textContent='0:00';
+  for (const key in cells) {
+    cells[key].value='';
+    const [r,c]=key.split(',').map(Number);
+    const td=document.getElementById(`td-${r}-${c}`);
+    if (td) td.classList.remove('correct','wrong');
+  }
+  document.querySelectorAll('.clue').forEach(el=>el.classList.remove('done'));
+  document.getElementById('sc').textContent='0';
+  updateDisplay();
+}
+
+function updateSolvedCount() {
+  let solved=0;
+  WORDS.forEach(w=>{
+    let ok=true;
+    for (let i=0;i<w.word.length;i++){
+      const r=w.dir==="across"?w.row:w.row+i;
+      const c=w.dir==="across"?w.col+i:w.col;
+      if ((cells[`${r},${c}`]?.value||'').toUpperCase()!==w.word[i]){ok=false;break;}
+    }
+    if(ok) solved++;
+  });
+  document.getElementById('sc').textContent=solved;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderGrid();
+</script>
+</body>
+</html>
