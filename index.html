@@ -263,9 +263,9 @@ const WORDS = [
   { id:4,  word:"UTP",       row:6,  col:0,  dir:"across", clue:"Cable de par trenzado muy común en redes LAN" },
   { id:5,  word:"WIFI",      row:8,  col:0,  dir:"across", clue:"Tecnología inalámbrica que usa ondas de radio" },
   { id:6,  word:"ANILLO",    row:10, col:0,  dir:"across", clue:"Topología donde los nodos se conectan en círculo" },
-  { id:7,  word:"WAN",       row:0,  col:2,  dir:"down",   clue:"Red de área amplia; Internet es su mayor ejemplo" },
-  { id:8,  word:"ESTRELLA",  row:0,  col:4,  dir:"down",   clue:"Topología con un nodo central tipo switch o hub" },
-  { id:9,  word:"BLUETOOTH", row:1,  col:8,  dir:"down",   clue:"Tecnología inalámbrica de corto alcance (PAN)" },
+  { id:7,  word:"WAN",       row:0,  col:3,  dir:"down",   clue:"Red de área amplia; Internet es su mayor ejemplo" },
+  { id:8,  word:"ESTRELLA",  row:0,  col:5,  dir:"down",   clue:"Topología con un nodo central tipo switch o hub" },
+  { id:9,  word:"BLUETOOTH", row:0,  col:7,  dir:"down",   clue:"Tecnología inalámbrica de corto alcance (PAN)" },
   { id:10, word:"COAXIAL",   row:3,  col:6,  dir:"down",   clue:"Cable con conductor central rodeado de malla metálica" },
 ];
 
@@ -288,7 +288,7 @@ WORDS.forEach(w => {
   if (!cellNums[startKey]) cellNums[startKey] = w.id;
 });
 
-// ─── STATE ──────────────────────────────────────────────────────────────
+// ─── STATE ──────────��───────────────────────────────────────────────────
 let selR = -1, selC = -1, selDir = "across";
 let timerSec = 0, timerStarted = false, timerInt = null;
 
